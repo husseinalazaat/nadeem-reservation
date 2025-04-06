@@ -2,42 +2,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Redirecting | Al Nadeem Reservation</title>
-  <meta http-equiv="refresh" content="2; URL=https://script.google.com/macros/s/AKfycbycKUYHzqoSdAww01OWHPTvcux8vbpP916NFJoSHAsHXGb7rjArOqB-5QFrcSKOBI73fg/exec">
+  <title>Al Nadeem Book Reservation</title>
+  <script>
+    let selectedNumbers = [];
+    let reserved = [];
+
+    function updateButtonState() {
+      const filled = document.getElementById('name').value &&
+                     document.getElementById('email').value &&
+                     document.getElementById('phone').value;
+      document.getElementById('submitBtn').disabled = !(filled && selectedNumbers.length > 0);
+    }
+
+    function toggleNumber(num, div) {
+      if (reserved.includes(num)) return;
+
+      if (selectedNumbers.includes(num)) {
+        selectedNumbers = selectedNumbers.filter(n => n !== num);
+        div.classList.remove("selected");
+      } else {
+        if (selectedNumbers.length >= 5) {
+          alert("You can only select up to 5 books.");
+          return;
+        }
+        selectedNumbers.push(num);
+        div.classList.add("selected");
+      }
+
+      updateButtonState();
+    }
+
+    function drawGrid() {
+      const grid = document.getElementById("grid");
+      for (let i = 1; i <= 250; i++) {
+        const div = document.createElement("div");
+        div.textContent = i;
+        div.className = "seat";
+        if (reserved.includes(i)) {
+          div.classList.add("reserved");
+        }
+        div.onclick = () => toggleNumber(i, div);
+        grid.appendChild(div);
+      }
+    }
+
+    function submit() {
+      const data = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        bookNumbers: selectedNumbers
+      };
+      google.script.run.withSuccessHandler(response => {
+        document.getElementById("message").innerText = response.message;
+        if (response.success) {
+          setTimeout(() => location.reload(), 2000);
+        }
+      }).submitBooking(data);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('name').oninput = updateButtonState;
+      document.getElementById('email').oninput = updateButtonState;
+      document.getElementById('phone').oninput = updateButtonState;
+
+      google.script.run.withSuccessHandler(function(data) {
+        reserved = data;
+        drawGrid();
+      }).getReservedBooks();
+    });
+  </script>
   <style>
     body {
       font-family: Courier, monospace;
+      margin: 0;
+      padding: 0;
       background-color: #f8f8f8;
-      color: #333;
-      text-align: center;
-      padding: 60px 20px;
     }
-    img {
-      width: 120px;
-      height: auto;
+    .container {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+    }
+    .left {
+      flex: 1;
+      background: #fff;
+      padding: 50px;
+      border-right: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .right {
+      flex: 2;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+      gap: 8px;
+    }
+    .seat {
+      padding: 14px 5px;
+      text-align: center;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      transition: background 0.3s;
+      background: #e0f7fa;
+      user-select: none;
+    }
+    .seat:hover {
+      background: #b2ebf2;
+    }
+    .selected {
+      background: #9e9e9e !important;
+      color: white;
+    }
+    .reserved {
+      background: #f44336;
+      color: white;
+      cursor: not-allowed;
+    }
+    input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-family: Courier, monospace;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-family: Courier, monospace;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    img.logo {
+      width: 100px;
+      height: 180px;
       margin-bottom: 20px;
     }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 10px;
+    h2, p {
+      font-size: 14px;
     }
-    p {
-      font-size: 15px;
-      color: #555;
-    }
-    a {
-      display: inline-block;
-      margin-top: 20px;
-      color: #2196f3;
-      text-decoration: none;
-      font-weight: bold;
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .left {
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid #ccc;
+      }
+      .seat {
+        font-size: 16px;
+        padding: 12px 5px;
+      }
+      input, button {
+        font-size: 14px;
+      }
+      h2 {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
 <body>
-  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTMBBqtLIVmUjAUqx4_s7tb9dzDYZtYZw1oQ&s" alt="Elharf Logo" />
-  <h1>📘 Al Nadeem Admin Panel</h1>
-  <p>جارٍ تحويلك إلى لوحة التحكم...<br>Redirecting you to the Admin Panel.</p>
-  <a href="https://script.google.com/macros/s/AKfycbycKUYHzqoSdAww01OWHPTvcux8vbpP916NFJoSHAsHXGb7rjArOqB-5QFrcSKOBI73fg/exec">Click here if not redirected</a>
+  <div class="container">
+    <div class="left">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTMBBqtLIVmUjAUqx4_s7tb9dzDYZtYZw1oQ&s" class="logo" alt="Elharf Logo" />
+      <h2>حجز كتاب النديم</h2>
+      <p>
+        مرحبًا بكم في حفل إطلاق كتاب "النديم"! هذا الكتاب إصدار محدود ومرقّم من 1 إلى 250.
+        الرجاء النقر على الرقم الذي تودّ امتلاكه، ثم تعبئة المعلومات أدناه، وسنتواصل معك لتأكيد الحجز.
+      </p>
+      <p>
+        Welcome to the launch of "Al Nadeem"! This limited-edition book is numbered from 1 to 250.
+        Please click on the number you’d like to reserve, then fill out the information below, and we’ll contact you to confirm your booking.
+      </p>
+      <input id="name" placeholder="الاسم / Name" />
+      <input id="email" placeholder="البريد الإلكتروني / Email" />
+      <input id="phone" placeholder="رقم الهاتف / Phone" />
+      <button id="submitBtn" onclick="submit()" disabled>Reserve</button>
+      <p id="message"></p>
+    </div>
+    <div class="right">
+      <div id="grid" class="grid"></div>
+    </div>
+  </div>
 </body>
 </html>
